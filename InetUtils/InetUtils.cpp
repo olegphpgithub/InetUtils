@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include "InetUtils.h"
+#include "MD5.h"
 
 #pragma comment(lib, "wininet.lib")
 
@@ -61,7 +62,40 @@ DWORD InetUtils::VerifyDownloadedFile(
 	LPCTSTR file_name
 	)
 {
+	TCHAR lpszURIForVerify[1024];
+	TCHAR lpszResponse[NSIS_MAX_STRLEN];
+	DWORD dwResponseSize = NSIS_MAX_STRLEN;
+	DWORD dwFileSize = 0;
 	DWORD dwLastError = ERROR_SUCCESS;
+	TCHAR lpszFileName[MAX_PATH];
+
+	FILE *file;
+	errno_t err = fopen_s(&file, file_name, "rb");
+	if (err == 0) {
+		fseek(file, 0, SEEK_END);
+		dwFileSize = ftell(file);
+		fclose(file);
+	} else {
+		return ERROR_FILE_NOT_FOUND;
+	}
+
+	_tcscpy_s((TCHAR*)lpszFileName, MAX_PATH, file_name);
+	char *lpszMD5File = MD5File((TCHAR*)lpszFileName);
+	char lpszMD5FileMask[64 + 1];
+	ZeroMemory(lpszMD5FileMask, 64 + 1);
+	for(int i = 0; i < 64; i++) {
+		if( (i%2) > 0 ) {
+			lpszMD5FileMask[i] = '0';
+		} else {
+			lpszMD5FileMask[i] = lpszMD5File[i / 2];
+		}
+	}
+	delete []lpszMD5File;
+	
+	_stprintf_s(lpszURIForVerify, 1024, TEXT("%s&f=%s&h=%s&size=%d"), url_verify, file_code, lpszMD5FileMask, dwFileSize);
+
+	dwLastError = InternetRequestFeedback(lpszURIForVerify, lpszResponse, &dwResponseSize);
+
 	return dwLastError;
 }
 
@@ -184,7 +218,8 @@ DWORD InetUtils::InetTransfer(
 						if(type == Feedback) {
 
 							if(lpszBuffer != NULL) {
-
+								
+								ZeroMemory(lpszBuffer, *cchBuffer);
 								dwBytesWrittenAccum = 0;
 								while(true) {
 
@@ -209,9 +244,9 @@ DWORD InetUtils::InetTransfer(
 										dwBytesToWrite
 									);
 									dwBytesWrittenAccum += dwBytesToWrite;
-									
-									lpszBuffer[dwBytesWrittenAccum - 1] = 0;
+
 									if(dwBytesToWrite == dwBytesLeft) {
+										*cchBuffer = dwBytesWrittenAccum;
 										break;
 									}
 
@@ -225,7 +260,7 @@ DWORD InetUtils::InetTransfer(
 
 						if(type == Download) {
 
-							if(dest == NULL) {
+							if(dest != NULL) {
 
 								HANDLE hLocalFile = CreateFile(
 									dest,
