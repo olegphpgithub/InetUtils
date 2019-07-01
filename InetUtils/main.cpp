@@ -34,13 +34,14 @@ int _tmain(int argc, _TCHAR* argv[])
 		InetUtils::ExecShell
 	);
 	
-
-	InetUtils::InternetRequestFeedback (
+	/*
+	dwResult = InetUtils::InternetRequestFeedback (
 		url,
 		file,
 		&dwTotal
 	);
+	*/
 
-	_tprintf("Result: %d\n", dwResult);
+	_tprintf(TEXT("Result: %d\n"), dwResult);
 	return 0;
 }

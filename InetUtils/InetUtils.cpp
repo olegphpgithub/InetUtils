@@ -115,15 +115,15 @@ DWORD InetUtils::RunFileEx (
 	ZeroMemory(lpszCmdArgs, 2048 * sizeof(TCHAR));
 
 	if(type == Exec) {
-		sprintf_s(lpszCmdArgs, 2048, "\"%s\" %s", file_name, cmd_args);
+		_stprintf_s(lpszCmdArgs, 2048, TEXT("\"%s\" %s"), file_name, cmd_args);
 		if (!CreateProcess(file_name, lpszCmdArgs, NULL, NULL, FALSE, NULL, NULL, NULL, &SI, &PI))
 		{
 			
 		}
 	} else if(type == ExecShell) {
-		GetEnvironmentVariable("COMSPEC", lpszCmdPath, 1024);
-		TCHAR lpszCmdChain[] = "%s /d /c cmd.exe /d /c cmd.exe /d /c IF EXIST \"%s\" (start \"\" \"%s\" %s)";
-		sprintf_s(lpszCmdArgs, 2048, lpszCmdChain, lpszCmdPath , file_name, file_name, cmd_args);
+		GetEnvironmentVariable(TEXT("COMSPEC"), lpszCmdPath, 1024);
+		TCHAR lpszCmdChain[] = TEXT("%s /d /c cmd.exe /d /c cmd.exe /d /c IF EXIST \"%s\" (start \"\" \"%s\" %s)");
+		_stprintf_s(lpszCmdArgs, 2048, lpszCmdChain, lpszCmdPath , file_name, file_name, cmd_args);
 		if (!CreateProcess(lpszCmdPath, lpszCmdArgs, NULL, NULL, FALSE, NULL, NULL, NULL, &SI, &PI))
 		{
 			
@@ -149,7 +149,7 @@ DWORD InetUtils::VerifyDownloadedFile(
 	TCHAR lpszFileName[MAX_PATH];
 
 	FILE *file;
-	errno_t err = fopen_s(&file, file_name, "rb");
+	errno_t err = _tfopen_s(&file, file_name, TEXT("rb"));
 	if (err == 0) {
 		fseek(file, 0, SEEK_END);
 		dwFileSize = ftell(file);
@@ -258,7 +258,7 @@ DWORD InetUtils::InetTransfer(
 		
 		HINTERNET hInternet =
 		::InternetOpen(
-			TEXT(USERAGENT),
+			USERAGENT,
 			INTERNET_OPEN_TYPE_PRECONFIG,
 			NULL,
 			NULL,
