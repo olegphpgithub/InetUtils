@@ -209,9 +209,9 @@ DWORD InetUtils::InetTransfer(
 										dwBytesToWrite
 									);
 									dwBytesWrittenAccum += dwBytesToWrite;
-
+									
+									lpszBuffer[dwBytesWrittenAccum - 1] = 0;
 									if(dwBytesToWrite == dwBytesLeft) {
-										lpszBuffer[dwBytesWrittenAccum - 1] = 0;
 										break;
 									}
 
