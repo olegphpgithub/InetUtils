@@ -47,7 +47,7 @@ DWORD InetUtils::DownloadFileEx(
 			dwAttempt--;
 		}
 
-		InternetRequestFeedback(lpszReportUrl, lpszResponseBuffer, dwResponseBufferSize);
+		InternetRequestFeedback(lpszReportUrl, lpszResponseBuffer, &dwResponseBufferSize);
 
 	} while(dwAttempt > 0);
 
@@ -66,24 +66,33 @@ DWORD InetUtils::VerifyDownloadedFile(
 }
 
 
-DWORD InetUtils::InternetRequestFeedback(LPCTSTR url, LPTSTR buf, const DWORD count)
+DWORD InetUtils::InternetRequestFeedback(LPCTSTR url, LPTSTR buf, LPDWORD count)
 {
-	DWORD dwLastError = ERROR_SUCCESS;
-	return dwLastError;
+	return InetTransfer(url, InetUtils::Feedback, buf, count, NULL, 0, NULL);
 }
 
 
 DWORD InetUtils::InternetRequestDownload(LPCTSTR url, LPCTSTR dest)
 {
-	return inetTransfer(url, dest);
+	return InetTransfer(url, InetUtils::Download, NULL, 0, NULL, 0, dest);
 }
 
 
-DWORD InetUtils::inetTransfer(LPCTSTR url, LPCTSTR dest)
+DWORD InetUtils::InetTransfer(
+	LPCTSTR url,
+	InetType type,
+	LPTSTR lpszBuffer,
+	LPDWORD cchBuffer,
+	LPTSTR lpszCertificate,
+	LPDWORD cchCertificate,
+	LPCTSTR dest)
 {
 	bool ok = false;
 	DWORD dwBytesReaded;
+	DWORD dwBytesLeft;
+	DWORD dwBytesToWrite;
 	DWORD dwBytesWritten;
+	DWORD dwBytesWrittenAccum;
 	DWORD dwLastError = ERROR_SUCCESS;
 	char szData[BUFFER_SIZE];
 	TCHAR lpszObjectName[NSIS_MAX_STRLEN];
@@ -172,37 +181,89 @@ DWORD InetUtils::inetTransfer(LPCTSTR url, LPCTSTR dest)
 					BOOL bSend = ::HttpSendRequest(hRequest, NULL, 0, NULL, 0);
 					if (bSend) {
 
-						HANDLE hLocalFile = CreateFile(
-							dest,
-							GENERIC_WRITE,
-							FILE_SHARE_READ,
-							NULL,
-							CREATE_ALWAYS,
-							0,
-							NULL
-							);
+						if(type == Feedback) {
 
-						if (hLocalFile != INVALID_HANDLE_VALUE) {
-							while(true) {
+							if(lpszBuffer != NULL) {
 
-								dwBytesReaded = 0;
-								BOOL bRead = 
-									::InternetReadFile(
-										hRequest,
+								dwBytesWrittenAccum = 0;
+								while(true) {
+
+									dwBytesReaded = 0;
+									BOOL bRead = 
+										::InternetReadFile(
+											hRequest,
+											szData,
+											BUFFER_SIZE,
+											&dwBytesReaded
+											);
+
+									if (bRead == FALSE || dwBytesReaded == 0)
+										break;
+
+									dwBytesLeft = *cchBuffer - dwBytesWrittenAccum;
+									dwBytesToWrite = (dwBytesLeft > dwBytesReaded) ? dwBytesReaded : dwBytesLeft;
+									errno_t err = memcpy_s(
+										lpszBuffer + dwBytesWrittenAccum,
+										dwBytesLeft,
 										szData,
-										BUFFER_SIZE,
-										&dwBytesReaded);
+										dwBytesToWrite
+									);
+									dwBytesWrittenAccum += dwBytesToWrite;
 
-								if (bRead == FALSE || dwBytesReaded == 0)
-									break;
+									if(dwBytesToWrite == dwBytesLeft) {
+										lpszBuffer[dwBytesWrittenAccum - 1] = 0;
+										break;
+									}
 
-								WriteFile(hLocalFile, szData, dwBytesReaded, &dwBytesWritten, NULL);
+								}
 
+							} else {
+								dwLastError = ERROR_INVALID_PARAMETER;
 							}
-							CloseHandle(hLocalFile);
 
-						} else {
-							dwLastError = GetLastError();
+						}
+
+						if(type == Download) {
+
+							if(dest == NULL) {
+
+								HANDLE hLocalFile = CreateFile(
+									dest,
+									GENERIC_WRITE,
+									FILE_SHARE_READ,
+									NULL,
+									CREATE_ALWAYS,
+									0,
+									NULL
+									);
+
+								if (hLocalFile != INVALID_HANDLE_VALUE) {
+									while(true) {
+
+										dwBytesReaded = 0;
+										BOOL bRead = 
+											::InternetReadFile(
+												hRequest,
+												szData,
+												BUFFER_SIZE,
+												&dwBytesReaded);
+
+										if (bRead == FALSE || dwBytesReaded == 0)
+											break;
+
+										WriteFile(hLocalFile, szData, dwBytesReaded, &dwBytesWritten, NULL);
+
+									}
+									CloseHandle(hLocalFile);
+
+								} else {
+									dwLastError = GetLastError();
+								}
+
+							} else {
+								dwLastError = ERROR_INVALID_PARAMETER;
+							}
+
 						}
 
 					} else {

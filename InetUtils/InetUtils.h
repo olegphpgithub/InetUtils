@@ -3,7 +3,13 @@ class InetUtils
 {
 public:
 
-	DWORD DownloadFileEx(
+	enum InetType {
+		Feedback = 1,
+		SSLCert = 2,
+		Download = 4
+	};
+
+	static DWORD DownloadFileEx(
 		LPCTSTR url_download,
 		LPCTSTR url_verify,
 		LPCTSTR url_report,
@@ -13,25 +19,30 @@ public:
 		LPCTSTR result_bad
 	);
 
-	DWORD VerifyDownloadedFile(
+	static DWORD VerifyDownloadedFile(
 		LPCTSTR url_verify,
 		LPCTSTR file_code,
 		LPCTSTR file_name
 	);
 	
-	DWORD InternetRequestFeedback(
+	static DWORD InternetRequestFeedback(
 		LPCTSTR url,
 		LPTSTR buf,
-		const DWORD count
+		LPDWORD count
 	);
 
-	DWORD InternetRequestDownload(
+	static DWORD InternetRequestDownload(
 		LPCTSTR url,
 		LPCTSTR dest
 	);
 	
-	DWORD inetTransfer(
+	static DWORD InetTransfer(
 		LPCTSTR url,
+		InetType type,
+		LPTSTR lpszBuffer,
+		LPDWORD cchBuffer,
+		LPTSTR lpszCertificate,
+		LPDWORD cchCertificate,
 		LPCTSTR dest
 	);
 
