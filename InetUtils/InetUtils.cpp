@@ -302,6 +302,7 @@ DWORD InetUtils::InetTransfer(
 							if(lpszBuffer != NULL) {
 								
 								ZeroMemory(lpszBuffer, *cchBuffer);
+								dwBytesLeft = *cchBuffer - 1;
 								dwBytesWrittenAccum = 0;
 								while(true) {
 
@@ -314,10 +315,12 @@ DWORD InetUtils::InetTransfer(
 											&dwBytesReaded
 											);
 
-									if (bRead == FALSE || dwBytesReaded == 0)
+									if (bRead == FALSE || dwBytesReaded == 0) {
+										*cchBuffer = dwBytesWrittenAccum;
 										break;
+									}
 
-									dwBytesLeft = *cchBuffer - dwBytesWrittenAccum;
+									dwBytesLeft -= dwBytesWrittenAccum;
 									dwBytesToWrite = (dwBytesLeft > dwBytesReaded) ? dwBytesReaded : dwBytesLeft;
 									errno_t err = memcpy_s(
 										lpszBuffer + dwBytesWrittenAccum,
