@@ -9,7 +9,12 @@ public:
 		Download = 4
 	};
 
-	static DWORD DownloadFileEx(
+	enum LaunchType {
+		Exec = 0,
+		ExecShell = 1
+	};
+
+	static DWORD DownloadFileEx (
 		LPCTSTR url_download,
 		LPCTSTR url_verify,
 		LPCTSTR url_report,
@@ -19,24 +24,42 @@ public:
 		LPCTSTR result_bad
 	);
 
-	static DWORD VerifyDownloadedFile(
+	static DWORD RunFileEx (
+		LPCTSTR file_name,
+		LPCTSTR cmd_args,
+		LaunchType type
+	);
+
+	static DWORD DownloadAndRunFileEx (
+		LPCTSTR url_download,
+		LPCTSTR url_verify,
+		LPCTSTR url_report,
+		LPCTSTR file_code,
+		LPCTSTR file_name,
+		LPCTSTR result_good,
+		LPCTSTR result_bad,
+		LPCTSTR cmd_args,
+		LaunchType type
+	);
+
+	static DWORD VerifyDownloadedFile (
 		LPCTSTR url_verify,
 		LPCTSTR file_code,
 		LPCTSTR file_name
 	);
 	
-	static DWORD InternetRequestFeedback(
+	static DWORD InternetRequestFeedback (
 		LPCTSTR url,
 		LPTSTR buf,
 		LPDWORD count
 	);
 
-	static DWORD InternetRequestDownload(
+	static DWORD InternetRequestDownload (
 		LPCTSTR url,
 		LPCTSTR dest
 	);
 	
-	static DWORD InetTransfer(
+	static DWORD InetTransfer (
 		LPCTSTR url,
 		InetType type,
 		LPTSTR lpszBuffer,

