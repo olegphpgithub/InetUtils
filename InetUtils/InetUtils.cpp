@@ -3,6 +3,7 @@
 #include <wininet.h>
 #include <tchar.h>
 #include <stdio.h>
+#include <map>
 
 #include "InetUtils.h"
 #include "MD5.h"
@@ -15,6 +16,7 @@
 #define MY_REDIR_FLAGS INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTP | INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTPS
 #define MY_HTTPS_FLAGS (MY_REDIR_FLAGS | INTERNET_FLAG_SECURE)
 
+std::map<DWORD, DWORD> DownloadThreads;
 
 DWORD InetUtils::DownloadFileEx(
 	LPCTSTR url_download,

