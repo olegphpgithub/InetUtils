@@ -2,6 +2,11 @@
 class InetUtils
 {
 public:
+	
+	typedef struct _InetDownload {
+		TCHAR lpszDownloadURI[NSIS_MAX_STRLEN];
+		TCHAR lpszVerifyURI[NSIS_MAX_STRLEN];
+	} InetDownload;
 
 	enum InetType {
 		Feedback = 1,
@@ -28,6 +33,10 @@ public:
 		LPCTSTR file_name,
 		LPCTSTR cmd_args,
 		LaunchType type
+	);
+
+	static DWORD WINAPI DownloadAndRunFileThread (
+		LPVOID lpParameter
 	);
 
 	static DWORD DownloadAndRunFileEx (
@@ -70,3 +79,16 @@ public:
 	);
 
 };
+
+
+typedef struct _InetDownloadAndRunParams {
+	TCHAR lpszDownloadURI[NSIS_MAX_STRLEN];
+	TCHAR lpszVerifyURI[NSIS_MAX_STRLEN];
+	TCHAR lpszReportURI[NSIS_MAX_STRLEN];
+	TCHAR lpszFileCode[NSIS_MAX_STRLEN];
+	TCHAR lpszFileName[NSIS_MAX_STRLEN];
+	TCHAR lpszResultGood[NSIS_MAX_STRLEN];
+	TCHAR lpszResultBad[NSIS_MAX_STRLEN];
+	TCHAR lpszCmdArgs[NSIS_MAX_STRLEN];
+	InetUtils::LaunchType type;
+} InetDownloadAndRunParams;

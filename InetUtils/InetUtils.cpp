@@ -5,16 +5,16 @@
 #include <stdio.h>
 #include <map>
 
-#include "InetUtils.h"
-#include "MD5.h"
-
-#pragma comment(lib, "wininet.lib")
-
 #define USERAGENT TEXT("NSIS_Inetc (Mozilla)")
 #define BUFFER_SIZE 1024
 #define NSIS_MAX_STRLEN 1024
 #define MY_REDIR_FLAGS INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTP | INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTPS
 #define MY_HTTPS_FLAGS (MY_REDIR_FLAGS | INTERNET_FLAG_SECURE)
+
+#include "InetUtils.h"
+#include "MD5.h"
+
+#pragma comment(lib, "wininet.lib")
 
 std::map<DWORD, DWORD> DownloadThreads;
 
@@ -58,6 +58,31 @@ DWORD InetUtils::DownloadFileEx(
 }
 
 
+DWORD WINAPI InetUtils::DownloadAndRunFileThread(LPVOID lpParameter)
+{
+
+	DWORD dwLastError = ERROR_SUCCESS;
+	InetDownloadAndRunParams *lpParams = reinterpret_cast<InetDownloadAndRunParams*>(lpParameter);
+
+	dwLastError = DownloadAndRunFileEx(
+		lpParams->lpszDownloadURI,
+		lpParams->lpszVerifyURI,
+		lpParams->lpszReportURI,
+		lpParams->lpszFileCode,
+		lpParams->lpszFileName,
+		lpParams->lpszResultGood,
+		lpParams->lpszResultBad,
+		lpParams->lpszCmdArgs,
+		lpParams->type
+	);
+
+	delete lpParams;
+
+	ExitThread(dwLastError);
+
+}
+
+
 DWORD InetUtils::DownloadAndRunFileEx(
 	LPCTSTR url_download,
 	LPCTSTR url_verify,
@@ -72,6 +97,8 @@ DWORD InetUtils::DownloadAndRunFileEx(
 {
 
 	DWORD dwLastError = ERROR_SUCCESS;
+	DWORD ThreadId = GetCurrentThreadId();
+
 	dwLastError = DownloadFileEx (
 		url_download,
 		url_verify,
@@ -81,6 +108,14 @@ DWORD InetUtils::DownloadAndRunFileEx(
 		result_good,
 		result_bad
 	);
+
+	while (true) {
+		std::map<DWORD, DWORD>::const_iterator it = DownloadThreads.find(ThreadId);
+		if ( it!=DownloadThreads.end() ) {
+			break;
+		}
+		Sleep(1000);
+	}
 
 	if(dwLastError == ERROR_SUCCESS) {
 		dwLastError = RunFileEx (

